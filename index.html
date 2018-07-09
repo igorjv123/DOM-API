@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <input type="text" name="search" id="search" />
+    <form action="">
+      <input id="r1" type="radio" name="date" value="upper">Дата▲<br>
+      <input id="r2" type="radio" name="date" value="lower" >Дата▼<br>
+    </form>
+
+  </br>
+    <div id="posts"></div>
+    <div style="text-align:center; padding:20px;">
+      <button id="loadBtn" onclick="loadPosts()">Ще пости</button>
+      <button id="unloadBtn" onclick="unloadPosts()">Повернутись</button>
+    </div>
+        </div>
+    <script  type="text/javascript">
+      const URL = 'https://api.myjson.com/bins/152f9j';
+      let posts = [];
+      let query = '';
+      let temp = 10;
+
+
+      document
+        .querySelector('#search')
+        .addEventListener('input', function(e) {
+          query = e.target.value;
+
+          renderPosts();
+
+          e.preventDefault();
+          e.stopPropagation();
+        });
+
+        document
+          .querySelector('#r1')
+          .addEventListener('change', function(e) {
+            localStorage.setItem('sort', 'upper');
+            renderPosts();
+
+            e.preventDefault();
+            e.stopPropagation();
+          });
+        document
+          .querySelector('#r2')
+          .addEventListener('change', function(e) {
+            localStorage.setItem('sort', 'lower');
+            renderPosts();
+
+            e.preventDefault();
+            e.stopPropagation();
+          });
+
+
+      fetchPosts();
+
+
+      function deleteBtn(a){
+        delete posts[a];
+        renderPosts();
+      }
+      function fetchPosts() {
+        fetch(URL)
+          .then((response) => response.json())
+          .then(function(result) {
+             posts = result.data;
+             renderPosts();
+          });
+      }
+      function loadPosts(){
+        temp +=10;
+        renderPosts();
+      }
+      function unloadPosts(){
+        temp=10;
+        document.querySelector('body').scrollIntoView(1);
+        renderPosts();
+      }
+      function renderPosts() {
+        const container = document.querySelector('#posts');
+        let content = '';
+
+        for (let key in posts) {
+          posts[key].id = key;
+          //console.log(posts[key]);
+        }
+
+        let len = filteredPosts().sort(compare).slice(0,temp).length;
+
+        for (var i=0; i<len; i++) {
+          let post = filteredPosts().sort(compare).slice(0,temp)[i];
+          content += renderPost(post);
+        }
+
+        container.innerHTML = content;
+      }
+
+      function filteredPosts() {
+        const regexp = new RegExp(`.*${query}.*`);
+        return posts.filter(post => post.title && regexp.test(post.title));
+
+      }
+
+      function renderPost(post) {
+
+        return `
+          <div>
+            <h2>${post.title}</h2>
+            <table style="text-align:left;">
+            <tr>
+              <td>
+              <img style="width:150px;" src="${post.image}">
+              </td>
+              <td>
+                <span style="font-size: 14px">
+                  Опис: </br>
+                  ${post.description}
+                  </br> Теги:
+                  ${post.tags}
+                  </br> Date:
+                  ${post.createdAt}
+                  </br>
+                  <button class="deleteBtn" value="${post.id}" onclick="deleteBtn(${post.id})">Видалити</button>
+                </span>
+              <td>
+            </tr>
+            </table>
+            </hr>
+          </div>
+        `;
+      }
+      function compare(a,b) {
+
+        if(getRadioValue() == "upper"){
+          if (a.createdAt < b.createdAt)
+            return -1;
+          if (a.createdAt > b.createdAt)
+            return 1;
+          return 0;
+        }
+        else {
+          if (a.createdAt > b.createdAt)
+            return -1;
+          if (a.createdAt < b.createdAt)
+            return 1;
+          return 0;
+        }
+      }
+      function getRadioValue() {
+        if(localStorage.getItem("sort") === null){
+          var radios = document.getElementsByName("date");
+          var val;
+          for(var i = 0; i < radios.length; i++){
+              if(radios[i].checked){
+                  val = radios[i].value;
+                  return val;
+              }
+          }
+        }
+        else {
+            return localStorage.getItem("sort");
+          }
+
+
+      }
+      function saveSort(item){
+        if(localStorage.getItem("sort") !== null)
+
+          return 'lower';
+        }
+
+    </script>
+  </body>
+
+
+
+
+</html>
